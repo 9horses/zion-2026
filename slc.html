@@ -1,0 +1,79 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Salt Lake City map - Zion, December 2026</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+<style>
+  :root { --ink:#111; --muted:#555; --rule:#ccc; --a:#d9480f; --b:#1c7ed6; --c:#2b8a3e; --off:#868e96; --bg:#fff; }
+  * { box-sizing:border-box; }
+  html, body { margin:0; height:100%; background:var(--bg); color:var(--ink);
+    font-family:-apple-system,"Helvetica Neue",Helvetica,Arial,sans-serif; font-size:14px; }
+  nav { display:flex; gap:18px; align-items:baseline; padding:12px 16px; border-bottom:1px solid var(--rule); font-size:15px; flex-wrap:wrap; }
+  nav .brand { font-weight:700; margin-right:auto; } nav a { color:var(--a); text-decoration:none; }
+  .wrap { display:grid; grid-template-columns: 400px 1fr; height:calc(100vh - 49px); }
+  aside { overflow:auto; padding:16px 18px; border-right:1px solid var(--rule); }
+  #map { height:100%; }
+  h1 { font-size:18px; margin:0 0 4px; }
+  .sub { color:var(--muted); font-size:12px; margin:0 0 14px; }
+  h2 { font-size:13px; text-transform:uppercase; letter-spacing:.04em; margin:16px 0 6px; }
+  ol { margin:0; padding-left:0; list-style:none; }
+  li { display:flex; gap:10px; padding:6px 0; border-bottom:1px solid #eee; cursor:pointer; }
+  li:hover { background:#f6f6f6; }
+  .pin { flex:0 0 22px; height:22px; border-radius:50%; color:#fff; font-size:11px; font-weight:700;
+    display:flex; align-items:center; justify-content:center; margin-top:1px; }
+  .a .pin { background:var(--a); } .b .pin { background:var(--b); } .c .pin { background:var(--c); } .off .pin { background:var(--off); }
+  .t { font-weight:600; } .n { color:var(--muted); font-size:12px; line-height:1.35; }
+  .n a { color:var(--a); }
+  .key { font-size:12px; color:var(--muted); margin-top:14px; }
+  .num { background:#fff; border:2px solid #333; border-radius:50%; width:24px !important; height:24px !important;
+    display:flex; align-items:center; justify-content:center; font:700 11px/1 sans-serif; color:#fff; }
+  .num.a { background:var(--a); border-color:#a33505; } .num.b { background:var(--b); border-color:#1259a3; }
+  .num.c { background:var(--c); border-color:#1e6130; } .num.off { background:var(--off); border-color:#5c636a; }
+  @media (max-width: 800px) { .wrap { grid-template-columns:1fr; grid-template-rows: 45vh 1fr; } aside { order:2; border-right:0; border-top:1px solid var(--rule); } }
+</style>
+</head>
+<body>
+<nav><span class="brand">Zion, December 2026</span><a href="index.html">Itinerary</a><a href="bryce.html">Bryce</a><a href="zion.html">Zion</a><a href="slc.html">Salt Lake</a><a href="weather.html">Weather</a><a href="packing.html">Packing</a></nav>
+<div class="wrap">
+<aside>
+  <h1>Salt Lake City, evening of Dec 8</h1>
+  <p class="sub">Orange is the hotel and the walk, blue is dinner, green is the airport run on Dec 9. Restaurant hours and reservations not yet checked.</p>
+  <h2>Hotel and the walk</h2>
+  <ol id="a"></ol>
+  <h2>Dinner</h2>
+  <ol id="b"></ol>
+  <h2>Dec 9 morning</h2>
+  <ol id="c"></ol>
+  <h2>Also nearby</h2>
+  <ol id="off"></ol>
+  
+  <div class="key">Pins are placed by hand and good to about a block. Tap a name for Google Maps directions; that link is the one to trust.</div>
+</aside>
+<div id="map"></div>
+</div>
+<script>
+const stops = [{"g": "a", "l": "1", "name": "Courtyard by Marriott SLC Downtown", "lat": 40.7668, "lng": -111.8995, "note": "Night of Dec 8, booked. 345 W 100 S. Keep the car; hotel parking is a daily fee. Delta Center is across the street.", "q": "https://www.google.com/maps/dir/?api=1&destination=Courtyard+by+Marriott+Salt+Lake+City+Downtown"}, {"g": "a", "l": "2", "name": "Temple Square", "lat": 40.7704, "lng": -111.8918, "note": "10 min walk east. Christmas lights from the day after Thanksgiving, dusk to 10 pm. The temple itself is under renovation; the lights are on the grounds and the Conference Center.", "q": "https://www.google.com/maps/dir/?api=1&destination=Temple+Square%2C+Salt+Lake+City"}, {"g": "a", "l": "3", "name": "City Creek Center", "lat": 40.768, "lng": -111.891, "note": "Open-air mall next to Temple Square, open to 9 pm. Easy dinner options inside if the restaurants below are full.", "q": "https://www.google.com/maps/dir/?api=1&destination=City+Creek+Center%2C+Salt+Lake+City"}, {"g": "a", "l": "4", "name": "Utah State Capitol", "lat": 40.7774, "lng": -111.8882, "note": "Lit at night, 20 min walk uphill north of Temple Square, view back over the city. Optional.", "q": "https://www.google.com/maps/dir/?api=1&destination=Utah+State+Capitol"}, {"g": "a", "l": "5", "name": "The Gateway", "lat": 40.7686, "lng": -111.9036, "note": "Shops and restaurants one block west of the hotel. Closer than Temple Square if it is snowing.", "q": "https://www.google.com/maps/dir/?api=1&destination=The+Gateway%2C+Salt+Lake+City"}, {"g": "b", "l": "6", "name": "Red Iguana", "lat": 40.7715, "lng": -111.912, "note": "The Salt Lake restaurant, Mexican with seven moles. 15 min walk west or a 4 min drive. No reservations, expect a wait; Red Iguana 2 on South Temple is the overflow.", "q": "https://www.google.com/maps/dir/?api=1&destination=Red+Iguana%2C+736+W+North+Temple%2C+Salt+Lake+City"}, {"g": "b", "l": "7", "name": "Takashi", "lat": 40.764, "lng": -111.892, "note": "Sushi, downtown’s best-known. Walkable. Reservations hard; go early.", "q": "https://www.google.com/maps/dir/?api=1&destination=Takashi%2C+18+W+Market+St%2C+Salt+Lake+City"}, {"g": "b", "l": "8", "name": "Valter’s Osteria", "lat": 40.762, "lng": -111.896, "note": "Italian, old-school table-side service. Reserve.", "q": "https://www.google.com/maps/dir/?api=1&destination=Valter%E2%80%99s+Osteria%2C+Salt+Lake+City"}, {"g": "b", "l": "9", "name": "The Copper Onion", "lat": 40.7623, "lng": -111.888, "note": "American bistro on Broadway, reliable, takes reservations.", "q": "https://www.google.com/maps/dir/?api=1&destination=The+Copper+Onion%2C+Salt+Lake+City"}, {"g": "c", "l": "10", "name": "Salt Lake City airport, rental return", "lat": 40.7845, "lng": -111.973, "note": "Dec 9, car back by 10:00. 15 min from the hotel on North Temple or I-80. Follow Rental Car Return signs.", "q": "https://www.google.com/maps/dir/?api=1&destination=Salt+Lake+City+International+Airport+Rental+Car+Return"}, {"g": "off", "l": "a", "name": "Delta Center", "lat": 40.7683, "lng": -111.9011, "note": "Across from the hotel. Check whether the Jazz or the Mammoth play on Dec 8; traffic and parking around the hotel will be heavy from 5 pm if so.", "q": "https://www.google.com/maps/dir/?api=1&destination=Delta+Center%2C+Salt+Lake+City"}];
+const map = L.map('map').setView([40.769, -111.9], 15);
+const topo = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Topo_Map/MapServer/tile/{z}/{y}/{x}', { maxZoom: 18, attribution: 'Tiles &copy; Esri, USGS, NPS' });
+const sat = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', { maxZoom: 18, attribution: 'Tiles &copy; Esri, Maxar, USGS' });
+const osm = L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19, attribution: '&copy; OpenStreetMap contributors' });
+const otm = L.tileLayer('https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png', { maxZoom: 16, attribution: '&copy; OpenStreetMap contributors, SRTM, OpenTopoMap' });
+(osm).addTo(map);
+L.control.layers({ 'Topo': topo, 'Satellite': sat, 'OpenStreetMap': osm, 'OpenTopoMap': otm }, null, { collapsed: false }).addTo(map);
+const markers = {};
+for (const s of stops) {
+  const icon = L.divIcon({ className: 'num ' + s.g, html: s.l, iconSize:[24,24], iconAnchor:[12,12] });
+  const link = s.q ? ' <a href="' + s.q + '" target="_blank" rel="noopener">Directions</a>' : '';
+  const m = L.marker([s.lat, s.lng], { icon }).addTo(map).bindPopup('<b>' + s.l + '. ' + s.name + '</b><br>' + s.note + link);
+  const li = document.createElement('li'); li.className = s.g;
+  li.innerHTML = '<div class="pin">' + s.l + '</div><div><div class="t">' + s.name + '</div><div class="n">' + s.note + link + '</div></div>';
+  li.onclick = (e) => { if (e.target.tagName === 'A') return; map.setView([s.lat, s.lng], Math.max(map.getZoom(), 16)); m.openPopup(); };
+  document.getElementById(s.g).appendChild(li);
+}
+
+</script>
+</body>
+</html>

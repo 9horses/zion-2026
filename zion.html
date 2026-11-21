@@ -1,0 +1,84 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Zion map - Zion, December 2026</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+<style>
+  :root { --ink:#111; --muted:#555; --rule:#ccc; --a:#d9480f; --b:#1c7ed6; --c:#2b8a3e; --off:#868e96; --bg:#fff; }
+  * { box-sizing:border-box; }
+  html, body { margin:0; height:100%; background:var(--bg); color:var(--ink);
+    font-family:-apple-system,"Helvetica Neue",Helvetica,Arial,sans-serif; font-size:14px; }
+  nav { display:flex; gap:18px; align-items:baseline; padding:12px 16px; border-bottom:1px solid var(--rule); font-size:15px; flex-wrap:wrap; }
+  nav .brand { font-weight:700; margin-right:auto; } nav a { color:var(--a); text-decoration:none; }
+  .wrap { display:grid; grid-template-columns: 400px 1fr; height:calc(100vh - 49px); }
+  aside { overflow:auto; padding:16px 18px; border-right:1px solid var(--rule); }
+  #map { height:100%; }
+  h1 { font-size:18px; margin:0 0 4px; }
+  .sub { color:var(--muted); font-size:12px; margin:0 0 14px; }
+  h2 { font-size:13px; text-transform:uppercase; letter-spacing:.04em; margin:16px 0 6px; }
+  ol { margin:0; padding-left:0; list-style:none; }
+  li { display:flex; gap:10px; padding:6px 0; border-bottom:1px solid #eee; cursor:pointer; }
+  li:hover { background:#f6f6f6; }
+  .pin { flex:0 0 22px; height:22px; border-radius:50%; color:#fff; font-size:11px; font-weight:700;
+    display:flex; align-items:center; justify-content:center; margin-top:1px; }
+  .a .pin { background:var(--a); } .b .pin { background:var(--b); } .c .pin { background:var(--c); } .off .pin { background:var(--off); }
+  .t { font-weight:600; } .n { color:var(--muted); font-size:12px; line-height:1.35; }
+  .n a { color:var(--a); }
+  .key { font-size:12px; color:var(--muted); margin-top:14px; }
+  .num { background:#fff; border:2px solid #333; border-radius:50%; width:24px !important; height:24px !important;
+    display:flex; align-items:center; justify-content:center; font:700 11px/1 sans-serif; color:#fff; }
+  .num.a { background:var(--a); border-color:#a33505; } .num.b { background:var(--b); border-color:#1259a3; }
+  .num.c { background:var(--c); border-color:#1e6130; } .num.off { background:var(--off); border-color:#5c636a; }
+  @media (max-width: 800px) { .wrap { grid-template-columns:1fr; grid-template-rows: 45vh 1fr; } aside { order:2; border-right:0; border-top:1px solid var(--rule); } }
+</style>
+</head>
+<body>
+<nav><span class="brand">Zion, December 2026</span><a href="index.html">Itinerary</a><a href="bryce.html">Bryce</a><a href="zion.html">Zion</a><a href="slc.html">Salt Lake</a><a href="weather.html">Weather</a><a href="packing.html">Packing</a></nav>
+<div class="wrap">
+<aside>
+  <h1>Zion, Dec 3 to 6</h1>
+  <p class="sub">Orange is the lodge end of the canyon, blue is the big-hike end, green is the mouth of the canyon and East Zion. Grey is nearby but closed or off the plan. Dashed lines are schematic, not the surveyed trails.</p>
+  <h2>Lodge end</h2>
+  <ol id="a"></ol>
+  <h2>Big hikes, Dec 5 and 6</h2>
+  <ol id="b"></ol>
+  <h2>Canyon mouth and East Zion</h2>
+  <ol id="c"></ol>
+  <h2>Nearby, not on the plan</h2>
+  <ol id="off"></ol>
+  
+  <div class="key">Pins are placed by hand and good to about a block. Tap a name for Google Maps directions; that link is the one to trust.</div>
+</aside>
+<div id="map"></div>
+</div>
+<script>
+const stops = [{"g": "a", "l": "1", "name": "Canyon Overlook Trail", "lat": 37.2134, "lng": -112.9407, "note": "Dec 3, 2:45. Park just east of the tunnel, 1 mi round trip to the view over the switchbacks. Rangers direct parking when the small lot is full.", "q": "https://www.google.com/maps/dir/?api=1&destination=Canyon+Overlook+Trailhead%2C+Zion+National+Park"}, {"g": "a", "l": "2", "name": "Zion Lodge", "lat": 37.25, "lng": -112.957, "note": "Nights of Dec 3 to 6. Red Rock Grill is in the lodge (breakfast 7, lunch 11:30 to 4, dinner 4:30). Private cars allowed on the scenic drive all week; the shuttle is off until Dec 26.", "q": "https://www.google.com/maps/dir/?api=1&destination=Zion+Lodge%2C+Springdale%2C+UT"}, {"g": "a", "l": "3", "name": "Emerald Pools footbridge", "lat": 37.251, "lng": -112.9585, "note": "Across the road from the lodge. Lower, Middle and Upper pools, then Kayenta Trail to the Grotto, 3 mi. Dec 5 afternoon.", "q": "https://www.google.com/maps/dir/?api=1&destination=Emerald+Pools+Trailhead%2C+Zion+National+Park"}, {"g": "b", "l": "4", "name": "The Grotto", "lat": 37.2593, "lng": -112.9513, "note": "Angels Landing and West Rim trailhead. Park at first light on Dec 5 or 6. Footbridge, then Refrigerator Canyon and Walter’s Wiggles.", "q": "https://www.google.com/maps/dir/?api=1&destination=The+Grotto+Trailhead%2C+Zion+National+Park"}, {"g": "b", "l": "5", "name": "Scout Lookout", "lat": 37.2721, "lng": -112.948, "note": "2 mi and 1,000 ft up from the Grotto. No permit to here. The chains start just beyond; permit checked at the base.", "q": null}, {"g": "b", "l": "6", "name": "Angels Landing", "lat": 37.2694, "lng": -112.9476, "note": "Half a mile of chains past Scout Lookout. Permit from the day-before lottery. Gloves and microspikes; turn around if the chains are iced.", "q": null}, {"g": "b", "l": "7", "name": "Temple of Sinawava", "lat": 37.2852, "lng": -112.9477, "note": "End of the scenic drive. Riverside Walk starts here, 2 mi round trip, paved, usually icy in the shade.", "q": "https://www.google.com/maps/dir/?api=1&destination=Temple+of+Sinawava%2C+Zion+National+Park"}, {"g": "b", "l": "8", "name": "Narrows entry", "lat": 37.2965, "lng": -112.9478, "note": "Where the Riverside Walk ends and the river becomes the trail. Only if the gauge is under 150 cfs. Turn around by noon.", "q": null}, {"g": "c", "l": "9", "name": "Canyon Junction", "lat": 37.216, "lng": -112.9818, "note": "Pa’rus Trail runs from here down to the visitor center along the river, 3.5 mi round trip. The Watchman is lit from here at sunset.", "q": "https://www.google.com/maps/dir/?api=1&destination=Canyon+Junction%2C+Zion+National+Park"}, {"g": "c", "l": "10", "name": "Visitor center", "lat": 37.2002, "lng": -112.9868, "note": "Wilderness desk for permits and conditions. Shuttle lot empty in December; park here for Pa’rus if the Canyon Junction pull-out is full.", "q": "https://www.google.com/maps/dir/?api=1&destination=Zion+Canyon+Visitor+Center"}, {"g": "c", "l": "11", "name": "Zion Adventures, Springdale", "lat": 37.189, "lng": -112.997, "note": "Dry suit pickup Dec 4 by 6 pm, return after the Narrows. Oscar’s Cafe is four blocks further down Zion Park Blvd.", "q": "https://www.google.com/maps/dir/?api=1&destination=Zion+Adventures%2C+36+Lion+Blvd%2C+Springdale%2C+UT"}, {"g": "c", "l": "12", "name": "Checkerboard Mesa", "lat": 37.2228, "lng": -112.8826, "note": "Pull-out on UT-9 east of the tunnel, on the way to East Zion on Dec 4.", "q": "https://www.google.com/maps/dir/?api=1&destination=Checkerboard+Mesa+Viewpoint%2C+Zion+National+Park"}, {"g": "c", "l": "13", "name": "Zion Mountain Ranch", "lat": 37.224, "lng": -112.81, "note": "Cordwood for lunch on Dec 4 and The Get for grab-and-go. About 4 mi east of the park gate on UT-9. Pin approximate.", "q": "https://www.google.com/maps/dir/?api=1&destination=Cordwood+Restaurant%2C+Zion+Mountain+Ranch%2C+Mt+Carmel%2C+UT"}, {"g": "c", "l": "14", "name": "East Zion Adventures", "lat": 37.23, "lng": -112.685, "note": "Dec 4 horseback and canyoneering. Meeting point comes with the booking; this pin is Mt Carmel Junction. Thunderbird Restaurant is here too.", "q": "https://www.google.com/maps/dir/?api=1&destination=East+Zion+Adventures%2C+Orderville%2C+UT"}, {"g": "off", "l": "a", "name": "Court of the Patriarchs", "lat": 37.2355, "lng": -112.966, "note": "Two-minute viewpoint on the drive in. Worth the stop on Dec 3 if there is light.", "q": "https://www.google.com/maps/dir/?api=1&destination=Court+of+the+Patriarchs+Viewpoint%2C+Zion+National+Park"}, {"g": "off", "l": "b", "name": "Weeping Rock", "lat": 37.2706, "lng": -112.9382, "note": "East Rim Trail partly closed by the rockfall; Hidden Canyon closed; Observation Point only from the east side. Not on the plan.", "q": null}, {"g": "off", "l": "c", "name": "Watchman Trail", "lat": 37.201, "lng": -112.985, "note": "Closed. Skip.", "q": null}, {"g": "off", "l": "d", "name": "Wire Pass Trailhead", "lat": 37.0192, "lng": -112.0248, "note": "Dec 6 alternative, 1 h east of Kanab on House Rock Valley Road. Off this map to the southeast; $6 per person, sedan OK when dry.", "q": "https://www.google.com/maps/dir/?api=1&destination=Wire+Pass+Trailhead"}];
+const map = L.map('map').setView([37.245, -112.955], 13);
+const topo = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Topo_Map/MapServer/tile/{z}/{y}/{x}', { maxZoom: 18, attribution: 'Tiles &copy; Esri, USGS, NPS' });
+const sat = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', { maxZoom: 18, attribution: 'Tiles &copy; Esri, Maxar, USGS' });
+const osm = L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19, attribution: '&copy; OpenStreetMap contributors' });
+const otm = L.tileLayer('https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png', { maxZoom: 16, attribution: '&copy; OpenStreetMap contributors, SRTM, OpenTopoMap' });
+(topo).addTo(map);
+L.control.layers({ 'Topo': topo, 'Satellite': sat, 'OpenStreetMap': osm, 'OpenTopoMap': otm }, null, { collapsed: false }).addTo(map);
+const markers = {};
+for (const s of stops) {
+  const icon = L.divIcon({ className: 'num ' + s.g, html: s.l, iconSize:[24,24], iconAnchor:[12,12] });
+  const link = s.q ? ' <a href="' + s.q + '" target="_blank" rel="noopener">Directions</a>' : '';
+  const m = L.marker([s.lat, s.lng], { icon }).addTo(map).bindPopup('<b>' + s.l + '. ' + s.name + '</b><br>' + s.note + link);
+  const li = document.createElement('li'); li.className = s.g;
+  li.innerHTML = '<div class="pin">' + s.l + '</div><div><div class="t">' + s.name + '</div><div class="n">' + s.note + link + '</div></div>';
+  li.onclick = (e) => { if (e.target.tagName === 'A') return; map.setView([s.lat, s.lng], Math.max(map.getZoom(), 15)); m.openPopup(); };
+  document.getElementById(s.g).appendChild(li);
+}
+
+L.polyline([[37.2593,-112.9513],[37.2640,-112.9540],[37.2680,-112.9530],[37.2721,-112.9480],[37.2694,-112.9476]], { color:'#1c7ed6', weight:3, dashArray:'6 6', opacity:.8 }).addTo(map);
+L.polyline([[37.2852,-112.9477],[37.2900,-112.9470],[37.2965,-112.9478]], { color:'#1c7ed6', weight:3, dashArray:'6 6', opacity:.8 }).addTo(map);
+L.polyline([[37.2510,-112.9585],[37.2525,-112.9640],[37.2520,-112.9697],[37.2560,-112.9600],[37.2593,-112.9513]], { color:'#d9480f', weight:3, dashArray:'6 6', opacity:.8 }).addTo(map);
+L.polyline([[37.2160,-112.9818],[37.2080,-112.9850],[37.2002,-112.9868]], { color:'#2b8a3e', weight:3, dashArray:'6 6', opacity:.8 }).addTo(map);
+
+</script>
+</body>
+</html>
