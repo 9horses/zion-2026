@@ -1,0 +1,110 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Bryce map - Zion, December 2026</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+<style>
+  :root { --ink:#111; --muted:#555; --rule:#ccc; --d2:#d9480f; --d3:#1c7ed6; --off:#868e96; --bg:#fff; }
+  * { box-sizing: border-box; }
+  html, body { margin:0; height:100%; background:var(--bg); color:var(--ink);
+    font-family:-apple-system,"Helvetica Neue",Helvetica,Arial,sans-serif; font-size:14px; }
+  .wrap { display:grid; grid-template-columns: 380px 1fr; height:calc(100vh - 49px); }
+  nav { display:flex; gap:18px; align-items:baseline; padding:12px 16px; border-bottom:1px solid var(--rule); font-size:15px; }
+  nav .brand { font-weight:700; margin-right:auto; } nav a { color:var(--d2); text-decoration:none; }
+  aside { overflow:auto; padding:16px 18px; border-right:1px solid var(--rule); }
+  #map { height:100%; }
+  h1 { font-size:18px; margin:0 0 4px; }
+  .sub { color:var(--muted); font-size:12px; margin:0 0 14px; }
+  h2 { font-size:13px; text-transform:uppercase; letter-spacing:.04em; margin:16px 0 6px; }
+  ol { margin:0; padding-left:0; list-style:none; }
+  li { display:flex; gap:10px; padding:6px 0; border-bottom:1px solid #eee; cursor:pointer; }
+  li:hover { background:#f6f6f6; }
+  .pin { flex:0 0 22px; height:22px; border-radius:50%; color:#fff; font-size:11px; font-weight:700;
+    display:flex; align-items:center; justify-content:center; margin-top:1px; }
+  .d2 .pin { background:var(--d2); } .d3 .pin { background:var(--d3); } .off .pin { background:var(--off); }
+  .t { font-weight:600; } .n { color:var(--muted); font-size:12px; line-height:1.35; }
+  .key { font-size:12px; color:var(--muted); margin-top:14px; }
+  .key span { display:inline-block; width:10px; height:10px; border-radius:50%; margin-right:4px; }
+  .num { background:#fff; border:2px solid #333; border-radius:50%; width:24px !important; height:24px !important;
+    display:flex; align-items:center; justify-content:center; font:700 11px/1 sans-serif; color:#fff; }
+  .num.d2 { background:var(--d2); border-color:#a33505; } .num.d3 { background:var(--d3); border-color:#1259a3; }
+  .num.off { background:var(--off); border-color:#5c636a; }
+  @media (max-width: 800px) { .wrap { grid-template-columns:1fr; grid-template-rows: 45vh 1fr; } aside { order:2; border-right:0; border-top:1px solid var(--rule); } }
+  @media print { .wrap { grid-template-columns: 300px 1fr; height: 7.3in; } }
+</style>
+</head>
+<body>
+<nav><span class="brand">Zion, December 2026</span><a href="index.html">Itinerary</a><a href="bryce.html">Bryce map</a></nav><div class="wrap">
+<aside>
+  <h1>Bryce Canyon, Dec 2 and 3</h1>
+  <p class="sub">Numbers follow the itinerary order. Orange is Wednesday Dec 2, blue is Thursday Dec 3, grey is nearby but closed or not planned. Click a row to centre the map.</p>
+
+  <h2>Wed Dec 2, afternoon</h2>
+  <ol id="d2"></ol>
+
+  <h2>Thu Dec 3, morning</h2>
+  <ol id="d3"></ol>
+
+  <h2>Nearby, not on the plan</h2>
+  <ol id="off"></ol>
+
+  <div class="key">Trail line between 5, 6, 7 and 8 is schematic, not the surveyed track. Pick up the NPS map at the visitor center for the trail itself.</div>
+</aside>
+<div id="map"></div>
+</div>
+
+<script>
+const stops = [
+  // day, label, name, lat, lng, note
+  ['d2','1','Red Canyon, UT-12', 37.7437,-112.3090,'You drive through the two rock arches on the way in from US-89. Pull-outs on both sides; first hoodoos of the trip. Icy stretch in winter.'],
+  ['d2','2','Park entrance and visitor center', 37.6400,-112.1690,'Buy the America the Beautiful pass here ($80, covers Bryce, Zion, Capitol Reef). Ask about trail and road status for the morning. Winter hours 8 to 4:30.'],
+  ['d2','3','Sunset Point', 37.6246,-112.1656,'Sunset 5:10 pm. Arrive by 4:30 for the light on the amphitheater. Thor’s Hammer is below you to the left. It will be 20s F; bring everything.'],
+  ['d2','4','Ruby’s Inn, Bryce Canyon City', 37.6740,-112.1570,'Night of Dec 2 (booked). Cowboy’s Buffet 6:30 am to 8:30 pm. 10 minutes from the rim.'],
+  ['d3','5','Sunrise Point', 37.6281,-112.1631,'Sunrise 7:27 am. The hoodoos face east, so this is the better light of the two days. Queen’s Garden trailhead starts here.'],
+  ['d3','6','Queen Victoria, Queen’s Garden', 37.6240,-112.1575,'Bottom of Queen’s Garden, 320 ft below the rim. Microspikes on from the top. Connector trail leads south to the Navajo Loop.'],
+  ['d3','7','Two Bridges, Navajo Loop', 37.6228,-112.1635,'Climb out on the Two Bridges side. The Wall Street side is closed all winter. Total loop about 3 mi, 600 ft gain, 2 to 3 h at winter pace.'],
+  ['d3','8','Back at Sunset Point', 37.6250,-112.1660,'Top of the Navajo switchbacks. Rim Trail 0.5 mi back north to the car at Sunrise Point if you parked there.'],
+  ['d3','9','Inspiration Point', 37.6190,-112.1660,'Short drive south. Three tiers; the upper one has the densest hoodoo view in the park. Rim Trail from here to Bryce Point is closed (cornices).'],
+  ['d3','10','Bryce Point', 37.6043,-112.1565,'Highest of the four amphitheater viewpoints. Last stop; leave the park by 12:30 for Zion, 2 h 15 via UT-12 and US-89. Apply for the Dec 4 Angels Landing lottery before 3 pm.'],
+  ['off','a','Mossy Cave', 37.6652,-112.1115,'On UT-12, 4 mi east of Ruby’s Inn. 0.8 mi walk to a frozen waterfall and a grotto. Only if you land at Bryce early on Dec 2.'],
+  ['off','b','Fairyland Point', 37.6490,-112.1470,'Spur road closed to cars all winter. Skip.'],
+  ['off','c','Paria View', 37.6080,-112.1640,'Spur road closed to cars all winter. Skip.'],
+  ['off','d','Bryce Canyon Lodge', 37.6270,-112.1667,'Closed for the season on Nov 30. Nothing open inside the park; food is at Ruby’s.'],
+  ['off','e','Natural Bridge and Rainbow Point', 37.5407,-112.2470,'Southern scenic drive, 18 mi to Rainbow Point. Closes for a day or more after each storm. Not in the Dec 3 time budget; if it is open and you are ahead, Natural Bridge is 20 min each way.'],
+];
+
+const map = L.map('map', { zoomControl: true }).setView([37.636,-112.168], 13);
+const topo = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Topo_Map/MapServer/tile/{z}/{y}/{x}', {
+  maxZoom: 17, attribution: 'Tiles &copy; Esri, USGS, NPS' }).addTo(map);
+const sat = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
+  maxZoom: 17, attribution: 'Tiles &copy; Esri, Maxar, USGS' });
+const otm = L.tileLayer('https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png', {
+  maxZoom: 16, attribution: '&copy; OpenStreetMap contributors, SRTM, OpenTopoMap' });
+L.control.layers({ 'Topo': topo, 'Satellite': sat, 'OpenTopoMap': otm }, null, { collapsed: false }).addTo(map);
+
+const markers = {};
+for (const [day,label,name,lat,lng,note] of stops) {
+  const icon = L.divIcon({ className: 'num ' + day, html: label, iconSize:[24,24], iconAnchor:[12,12] });
+  const m = L.marker([lat,lng], { icon }).addTo(map)
+    .bindPopup('<b>' + label + '. ' + name + '</b><br>' + note);
+  markers[label] = m;
+  const li = document.createElement('li');
+  li.className = day;
+  li.innerHTML = '<div class="pin">' + label + '</div><div><div class="t">' + name + '</div><div class="n">' + note + '</div></div>';
+  li.onclick = () => { map.setView([lat,lng], Math.max(map.getZoom(), 15)); m.openPopup(); };
+  document.getElementById(day).appendChild(li);
+}
+
+// Schematic hike line: Sunrise Pt -> Queen's Garden -> Two Bridges -> Sunset Pt
+L.polyline([[37.6281,-112.1631],[37.6262,-112.1600],[37.6240,-112.1575],[37.6230,-112.1610],[37.6228,-112.1635],[37.6250,-112.1660]],
+  { color:'#1c7ed6', weight:3, dashArray:'6 6', opacity:.8 }).addTo(map);
+
+// Scenic drive spine: Ruby's -> entrance -> Sunrise -> Sunset -> Inspiration -> Bryce Point (approximate road)
+L.polyline([[37.6740,-112.1570],[37.6560,-112.1640],[37.6400,-112.1690],[37.6300,-112.1700],[37.6281,-112.1631]],
+  { color:'#444', weight:2, opacity:.5 }).addTo(map);
+</script>
+</body>
+</html>
